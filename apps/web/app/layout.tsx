@@ -14,6 +14,8 @@ export const viewport = {
   initialScale: 1.0,
 };
 
+import { Toaster } from 'sonner';
+
 export default function RootLayout({
   children,
 }: {
@@ -23,6 +25,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <Toaster position="top-right" richColors theme="light" />
       </body>
     </html>
   );

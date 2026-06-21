@@ -2,10 +2,29 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Modal registration state
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [registerStep, setRegisterStep] = useState(1);
+  const [registerFormData, setRegisterFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    age: '',
+    city: '',
+    role: 'pastor',
+    churchName: '',
+    denomination: '',
+    foodPreference: 'veg',
+    expectations: '',
+    agreeToTime: 'yes',
+  });
+  const [registerSubmitted, setRegisterSubmitted] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,8 +35,64 @@ export default function LandingPage() {
       }
     };
     window.addEventListener('scroll', handleScroll);
+
+    // Support opening the modal via query parameter: /?register=true
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('register') === 'true') {
+      setIsRegisterModalOpen(true);
+    }
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleRegisterInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setRegisterFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const nextRegisterStep = () => {
+    if (registerStep === 1) {
+      if (!registerFormData.name.trim() || !registerFormData.email.trim() || !registerFormData.phone.trim() || !registerFormData.age || !registerFormData.city.trim()) {
+        toast.error('Please fill out all required fields in Step 1.');
+        return;
+      }
+    } else if (registerStep === 2) {
+      if (!registerFormData.churchName.trim() || !registerFormData.denomination.trim()) {
+        toast.error('Please fill out all required fields in Step 2.');
+        return;
+      }
+    }
+    if (registerStep < 3) setRegisterStep((s) => s + 1);
+  };
+
+  const prevRegisterStep = () => {
+    if (registerStep > 1) setRegisterStep((s) => s - 1);
+  };
+
+  const handleRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterSubmitted(true);
+  };
+
+  const closeRegisterModal = () => {
+    setIsRegisterModalOpen(false);
+    // Reset states on close
+    setRegisterStep(1);
+    setRegisterSubmitted(false);
+    setRegisterFormData({
+      name: '',
+      email: '',
+      phone: '',
+      age: '',
+      city: '',
+      role: 'pastor',
+      churchName: '',
+      denomination: '',
+      foodPreference: 'veg',
+      expectations: '',
+      agreeToTime: 'yes',
+    });
+  };
 
   return (
     <div style={{ position: 'relative', overflowX: 'hidden', minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
@@ -68,7 +143,7 @@ export default function LandingPage() {
             <Link href="#highlights" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color var(--transition-fast)' }}>Highlights</Link>
             <Link href="#who" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color var(--transition-fast)' }}>Who Should Attend</Link>
             <Link href="#organized-by" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px', fontWeight: 500, transition: 'color var(--transition-fast)' }}>Organized By</Link>
-            <Link href="/register" className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>Register Now</Link>
+            <button onClick={() => setIsRegisterModalOpen(true)} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>Register Now</button>
           </div>
 
           {/* Mobile Navigation Button */}
@@ -97,14 +172,13 @@ export default function LandingPage() {
           <Link href="#highlights" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 600, textDecoration: 'none' }}>Highlights</Link>
           <Link href="#who" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 600, textDecoration: 'none' }}>Who Should Attend</Link>
           <Link href="#organized-by" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 600, textDecoration: 'none' }}>Organized By</Link>
-          <Link
-            href="/register"
-            onClick={() => setMobileMenuOpen(false)}
+          <button
+            onClick={() => { setMobileMenuOpen(false); setIsRegisterModalOpen(true); }}
             className="btn btn-primary"
             style={{ marginTop: '16px', padding: '12px 32px' }}
           >
             Register Now
-          </Link>
+          </button>
         </div>
       )}
 
@@ -175,9 +249,9 @@ export default function LandingPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '80px', flexWrap: 'wrap' }}>
-            <Link href="/register" className="btn btn-gold">
+            <button onClick={() => setIsRegisterModalOpen(true)} className="btn btn-gold">
               Register Now
-            </Link>
+            </button>
             <Link href="#about" className="btn btn-secondary">
               Conference Details
             </Link>
@@ -557,9 +631,9 @@ export default function LandingPage() {
             <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: '24px' }}>
               Seats are limited to only 150 leaders. Early registration is highly recommended to secure your participation in this exclusive leadership gathering.
             </p>
-            <Link href="/register" className="btn btn-gold" style={{ width: '220px' }}>
+            <button onClick={() => setIsRegisterModalOpen(true)} className="btn btn-gold" style={{ width: '220px' }}>
               Register Now
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -626,7 +700,23 @@ export default function LandingPage() {
                 <li><Link href="#about" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>About</Link></li>
                 <li><Link href="#speakers" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Speakers</Link></li>
                 <li><Link href="#highlights" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Highlights</Link></li>
-                <li><Link href="/register" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Register Now</Link></li>
+                <li>
+                  <button 
+                    onClick={() => setIsRegisterModalOpen(true)} 
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer', 
+                      color: 'var(--text-secondary)', 
+                      textDecoration: 'none', 
+                      padding: 0, 
+                      font: 'inherit', 
+                      textAlign: 'left' 
+                    }}
+                  >
+                    Register Now
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -651,6 +741,361 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Registration Modal Overlay */}
+      {isRegisterModalOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '20px',
+          }}
+          onClick={closeRegisterModal}
+          className="fade-in"
+        >
+          {/* Modal Card */}
+          <div 
+            style={{
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative',
+              borderRadius: 'var(--radius-lg)',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              boxShadow: 'var(--shadow-xl)',
+              padding: '32px',
+            }}
+            onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking card itself
+          >
+            {/* Close Button */}
+            <button 
+              onClick={closeRegisterModal}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(15, 23, 42, 0.05)',
+                border: 'none',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-primary)',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                transition: 'background var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(15, 23, 42, 0.05)'}
+            >
+              ✕
+            </button>
+
+            {registerSubmitted ? (
+              /* Success Screen */
+              <div className="fade-in" style={{ textAlign: 'center', padding: '40px 10px' }}>
+                <div style={{ fontSize: '56px', marginBottom: '20px' }}>🛡️</div>
+                <h2 className="gradient-text-gold" style={{ fontSize: '28px', marginBottom: '12px' }}>Registration Complete!</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
+                  Thank you, <strong>{registerFormData.name}</strong>, for registering for the Kingdom Leaders 2026 Conference. We will send updates to <strong>{registerFormData.email}</strong> or <strong>{registerFormData.phone}</strong> as the event date approaches.
+                </p>
+                <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '32px', textAlign: 'left' }}>
+                  <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '14px' }}>Details Summary:</h4>
+                  <p style={{ fontSize: '12px', margin: '4px 0' }}><span style={{ color: 'var(--text-muted)' }}>Date:</span> Wednesday, 26 August 2026</p>
+                  <p style={{ fontSize: '12px', margin: '4px 0' }}><span style={{ color: 'var(--text-muted)' }}>Time:</span> 9:30 AM – 4:00 PM</p>
+                  <p style={{ fontSize: '12px', margin: '4px 0' }}><span style={{ color: 'var(--text-muted)' }}>Venue:</span> Palpanabanouthoor C.S.I. Church</p>
+                  <p style={{ fontSize: '12px', margin: '4px 0' }}><span style={{ color: 'var(--text-muted)' }}>Lunch:</span> {registerFormData.foodPreference.toUpperCase()}</p>
+                </div>
+                <button onClick={closeRegisterModal} className="btn btn-primary">
+                  Close Window
+                </button>
+              </div>
+            ) : (
+              /* Multi-step Form */
+              <div className="fade-in">
+                
+                {/* Header & Steps Indicator */}
+                <div style={{ marginBottom: '32px', paddingRight: '24px' }}>
+                  <span style={{ color: 'var(--color-secondary)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
+                    REGISTRATION PORTAL
+                  </span>
+                  <h2 style={{ fontSize: '24px', color: 'var(--text-primary)', marginTop: '6px', marginBottom: '20px' }}>
+                    Register for Kingdom Leaders
+                  </h2>
+                  
+                  {/* Progress Bar */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {[1, 2, 3].map((s) => (
+                      <React.Fragment key={s}>
+                        <div
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            background: registerStep >= s ? 'var(--color-secondary)' : 'var(--bg-tertiary)',
+                            color: registerStep >= s ? '#0b0f19' : 'var(--text-secondary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            fontFamily: 'var(--font-mono)',
+                            border: registerStep === s ? '2px solid var(--color-primary)' : '1px solid var(--border-color)',
+                          }}
+                        >
+                          {s}
+                        </div>
+                        {s < 3 && (
+                          <div
+                            style={{
+                              flex: 1,
+                              height: '2px',
+                              background: registerStep > s ? 'var(--color-secondary)' : 'var(--border-color)',
+                            }}
+                          />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Form Element */}
+                <form onSubmit={handleRegisterSubmit}>
+                  
+                  {/* Step 1: Personal Info */}
+                  {registerStep === 1 && (
+                    <div className="fade-in">
+                      <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                        Step 1: Personal Details
+                      </h3>
+                      
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-name">Full Name</label>
+                        <input
+                          type="text"
+                          id="modal-name"
+                          name="name"
+                          required
+                          className="form-input"
+                          placeholder="John Doe"
+                          value={registerFormData.name}
+                          onChange={handleRegisterInputChange}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-email">Email Address</label>
+                        <input
+                          type="email"
+                          id="modal-email"
+                          name="email"
+                          required
+                          className="form-input"
+                          placeholder="john@example.com"
+                          value={registerFormData.email}
+                          onChange={handleRegisterInputChange}
+                        />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="modal-phone">Phone Number</label>
+                          <input
+                            type="tel"
+                            id="modal-phone"
+                            name="phone"
+                            required
+                            className="form-input"
+                            placeholder="+91 XXXXX XXXXX"
+                            value={registerFormData.phone}
+                            onChange={handleRegisterInputChange}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="modal-age">Age</label>
+                          <input
+                            type="number"
+                            id="modal-age"
+                            name="age"
+                            required
+                            min="15"
+                            max="100"
+                            className="form-input"
+                            placeholder="30"
+                            value={registerFormData.age}
+                            onChange={handleRegisterInputChange}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-city">City & State</label>
+                        <input
+                          type="text"
+                          id="modal-city"
+                          name="city"
+                          required
+                          className="form-input"
+                          placeholder="Nagercoil, Tamil Nadu"
+                          value={registerFormData.city}
+                          onChange={handleRegisterInputChange}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 2: Church/Ministry */}
+                  {registerStep === 2 && (
+                    <div className="fade-in">
+                      <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                        Step 2: Church & Ministry Info
+                      </h3>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-role">Ministry Role</label>
+                        <select
+                          id="modal-role"
+                          name="role"
+                          className="form-input"
+                          value={registerFormData.role}
+                          onChange={handleRegisterInputChange}
+                        >
+                          <option value="pastor">Pastor / Evangelist</option>
+                          <option value="elder">Church Elder / Coordinator</option>
+                          <option value="ce-leader">Christian Endeavour Leader</option>
+                          <option value="youth-leader">Youth / Student Leader</option>
+                          <option value="sunday-school">Sunday School Teacher</option>
+                          <option value="small-group">Small Group Facilitator</option>
+                          <option value="volunteer">Ministry Volunteer</option>
+                          <option value="emerging-leader">Emerging Christian Leader</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-churchName">Church Name</label>
+                        <input
+                          type="text"
+                          id="modal-churchName"
+                          name="churchName"
+                          required
+                          className="form-input"
+                          placeholder="Palpanabanouthoor C.S.I. Church"
+                          value={registerFormData.churchName}
+                          onChange={handleRegisterInputChange}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-denomination">Denomination / Affiliation</label>
+                        <input
+                          type="text"
+                          id="modal-denomination"
+                          name="denomination"
+                          required
+                          className="form-input"
+                          placeholder="e.g. C.S.I. (Church of South India)"
+                          value={registerFormData.denomination}
+                          onChange={handleRegisterInputChange}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Preference & Expectations */}
+                  {registerStep === 3 && (
+                    <div className="fade-in">
+                      <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                        Step 3: Preference & Expectations
+                      </h3>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-foodPreference">Lunch Preference</label>
+                        <select
+                          id="modal-foodPreference"
+                          name="foodPreference"
+                          className="form-input"
+                          value={registerFormData.foodPreference}
+                          onChange={handleRegisterInputChange}
+                        >
+                          <option value="veg">Vegetarian</option>
+                          <option value="non-veg">Non-Vegetarian</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-expectations">What do you hope to learn or experience?</label>
+                        <textarea
+                          id="modal-expectations"
+                          name="expectations"
+                          required
+                          rows={4}
+                          className="form-input"
+                          placeholder="Tell us your expectations..."
+                          value={registerFormData.expectations}
+                          onChange={handleRegisterInputChange}
+                          style={{ resize: 'vertical' }}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="modal-agreeToTime">Can you commit to attending from 9:30 AM to 4:00 PM?</label>
+                        <select
+                          id="modal-agreeToTime"
+                          name="agreeToTime"
+                          className="form-input"
+                          value={registerFormData.agreeToTime}
+                          onChange={handleRegisterInputChange}
+                        >
+                          <option value="yes">Yes, I will attend the full duration.</option>
+                          <option value="no">No, I can only attend part of it.</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Navigation Buttons */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+                    {registerStep > 1 ? (
+                      <button type="button" onClick={prevRegisterStep} className="btn btn-secondary" style={{ padding: '8px 20px', fontSize: '13px' }}>
+                        Previous
+                      </button>
+                    ) : (
+                      <div />
+                    )}
+
+                    {registerStep < 3 ? (
+                      <button type="button" onClick={nextRegisterStep} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '13px' }}>
+                        Next Step
+                      </button>
+                    ) : (
+                      <button type="submit" className="btn btn-gold" style={{ padding: '8px 20px', fontSize: '13px' }}>
+                        Complete Registration
+                      </button>
+                    )}
+                  </div>
+
+                </form>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
       {/* Inject style tag for simple responsiveness and menu toggling without tailwind */}
       <style jsx global>{`
